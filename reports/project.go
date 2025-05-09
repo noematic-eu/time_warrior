@@ -15,6 +15,7 @@ type project struct {
 	totalTimeWorked int
 	tasks           map[string]*task
 	scanErrors      []scanError
+	feePerHour      float64
 }
 
 type scanError struct {
@@ -116,4 +117,14 @@ func (p *project) Name() string {
 // SortedTasks returns a sorted list of tasks
 func (p *project) SortedTasks() []*task {
 	return p.sortedTasks()
+}
+
+// FeePerHour returns the project's fee per hour
+func (p *project) FeePerHour() float64 {
+	return p.feePerHour
+}
+
+// SetFeePerHour sets the project's fee per hour
+func (p *project) SetFeePerHour(fee float64) {
+	p.feePerHour = fee
 }

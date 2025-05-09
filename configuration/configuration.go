@@ -2,6 +2,7 @@
 package configuration
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"path"
@@ -15,6 +16,7 @@ type Config struct {
 	dataFolder      string
 	pendingFilename string
 	projectFile     string
+	feeFile         string
 }
 
 // New returns a new configuration with some sane defaults
@@ -30,6 +32,7 @@ func New() *Config {
 		dataFolder:      "time_warrior",
 		pendingFilename: ".pending",
 		projectFile:     ".project",
+		feeFile:         ".fees",
 	}
 }
 
@@ -45,6 +48,10 @@ func (c Config) ProjectFilePath() string {
 	return path.Join(c.DataDirectoryPath(), c.projectFile)
 }
 
+func (c Config) FeeFilePath() string {
+	return path.Join(c.DataDirectoryPath(), c.feeFile)
+}
+
 func (c Config) VerifyDataFilesPresent() bool {
 	if _, err := os.Stat(c.DataDirectoryPath()); err != nil {
 		return false
@@ -55,6 +62,10 @@ func (c Config) VerifyDataFilesPresent() bool {
 	}
 
 	if _, err := os.Stat(c.ProjectFilePath()); err != nil {
+		return false
+	}
+
+	if _, err := os.Stat(c.FeeFilePath()); err != nil {
 		return false
 	}
 
@@ -78,4 +89,57 @@ func (c Config) GetCurrentProject() (string, error) {
 // SetCurrentProject sets the current project
 func (c Config) SetCurrentProject(project string) error {
 	return os.WriteFile(c.ProjectFilePath(), []byte(project), 0644)
+}
+
+// GetProjectFee returns the fee per hour for a project
+func (c Config) GetProjectFee(project string) (float64, error) {
+	feePath := path.Join(c.DataDirectoryPath(), c.feeFile)
+	if _, err := os.Stat(feePath); err != nil {
+		return 0, nil
+	}
+
+	data, err := os.ReadFile(feePath)
+	if err != nil {
+		return 0, err
+	}
+
+	var fees map[string]float64
+	if err := json.Unmarshal(data, &fees); err != nil {
+		return 0, err
+	}
+
+	if fee, ok := fees[project]; ok {
+		return fee, nil
+	}
+	return 0, nil
+}
+
+// SetProjectFee sets the fee per hour for a project
+func (c Config) SetProjectFee(project string, fee float64) error {
+	feePath := path.Join(c.DataDirectoryPath(), c.feeFile)
+
+	// Read existing fees
+	var fees map[string]float64
+	if _, err := os.Stat(feePath); err == nil {
+		data, err := os.ReadFile(feePath)
+		if err != nil {
+			return err
+		}
+		if err := json.Unmarshal(data, &fees); err != nil {
+			return err
+		}
+	} else {
+		fees = make(map[string]float64)
+	}
+
+	// Update fee
+	fees[project] = fee
+
+	// Write back to file
+	data, err := json.Marshal(fees)
+	if err != nil {
+		return err
+	}
+
+	return os.WriteFile(feePath, data, 0644)
 }

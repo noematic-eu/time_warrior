@@ -52,6 +52,21 @@ func setupNewInstall(config *configuration.Config) error {
 		fmt.Println("project file was created!")
 	}
 
+	// Create fees file if it doesn't exist
+	fees := config.FeeFilePath()
+	if _, err := os.Stat(fees); err != nil {
+		f, createErr := os.Create(fees)
+		if createErr != nil {
+			return createErr
+		}
+		defer f.Close()
+		// Initialize with empty JSON object
+		if _, err := f.Write([]byte("{}")); err != nil {
+			return err
+		}
+		fmt.Println("fees file was created!")
+	}
+
 	if !config.VerifyDataFilesPresent() {
 		return fmt.Errorf("one or more data files are missing! Re-run the app")
 	}

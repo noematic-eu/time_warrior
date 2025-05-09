@@ -11,7 +11,11 @@ var projectCmd = &cobra.Command{
 	Short: "Set or show the current project",
 	Long: `Set or show the current project for time tracking.
 If no project is provided, the current project will be displayed.
-If a project is provided, it will be set as the current project.`,
+If a project is provided, it will be set as the current project.
+
+Examples:
+  tw project                    # Show current project
+  tw project MyProject         # Set current project`,
 	Aliases: []string{"pr"},
 	Args:    cobra.MaximumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {

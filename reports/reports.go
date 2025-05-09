@@ -68,6 +68,7 @@ func (r *Report) printProjects() {
 		fmt.Printf("Time Period: %s (%s)\n\n", r.timePeriod.Period(), r.formattedDates())
 	}
 
+	var totalAmount float64
 	for _, p := range r.projects {
 		if p.totalTimeWorked == 0 {
 			continue
@@ -75,10 +76,27 @@ func (r *Report) printProjects() {
 
 		w := worked.WorkTime{}
 		w.FromSeconds(p.totalTimeWorked)
+		var amount float64
+		if p.feePerHour > 0 {
+			amount = float64(w.Hours) * p.feePerHour
+			if w.Minutes > 0 {
+				amount += (float64(w.Minutes) / 60.0) * p.feePerHour
+			}
+			totalAmount += amount
+		}
+
 		if w.Hours == 0 {
-			fmt.Printf("     %4dm : %s\n", w.Minutes, p.name)
+			if p.feePerHour > 0 {
+				fmt.Printf("     %4dm : %s ($%.2f)\n", w.Minutes, p.name, amount)
+			} else {
+				fmt.Printf("     %4dm : %s\n", w.Minutes, p.name)
+			}
 		} else {
-			fmt.Printf("%4dh %3dm : %s\n", w.Hours, w.Minutes, p.name)
+			if p.feePerHour > 0 {
+				fmt.Printf("%4dh %3dm : %s ($%.2f)\n", w.Hours, w.Minutes, p.name, amount)
+			} else {
+				fmt.Printf("%4dh %3dm : %s\n", w.Hours, w.Minutes, p.name)
+			}
 		}
 	}
 
@@ -91,6 +109,9 @@ func (r *Report) printProjects() {
 	}
 
 	r.printTotal(r.totalTimeWorked + r.PendingTimeslip.TotalTimeWorked())
+	if totalAmount > 0 {
+		fmt.Printf("Total Amount: $%.2f\n", totalAmount)
+	}
 }
 
 // Displays project overview, along with all tasks and their time worked.
@@ -101,17 +122,38 @@ func (r *Report) printProjectTasks() {
 	if r.timePeriod.IsSet() {
 		fmt.Printf("Time Period:  %s (%s)\n", r.timePeriod.Period(), r.formattedDates())
 	}
+	if p.feePerHour > 0 {
+		fmt.Printf("Fee per hour: $%.2f\n", p.feePerHour)
+	}
 	fmt.Println()
 
 	fmt.Println("Task List")
 
+	var totalAmount float64
 	for _, t := range p.sortedTasks() {
 		w := worked.WorkTime{}
 		w.FromSeconds(t.timeWorked)
+		var amount float64
+		if p.feePerHour > 0 {
+			amount = float64(w.Hours) * p.feePerHour
+			if w.Minutes > 0 {
+				amount += (float64(w.Minutes) / 60.0) * p.feePerHour
+			}
+			totalAmount += amount
+		}
+
 		if w.Hours == 0 {
-			fmt.Printf("     %4dm : %s\n", w.Minutes, t.name)
+			if p.feePerHour > 0 {
+				fmt.Printf("     %4dm : %s ($%.2f)\n", w.Minutes, t.name, amount)
+			} else {
+				fmt.Printf("     %4dm : %s\n", w.Minutes, t.name)
+			}
 		} else {
-			fmt.Printf("%4dh %3dm : %s\n", w.Hours, w.Minutes, t.name)
+			if p.feePerHour > 0 {
+				fmt.Printf("%4dh %3dm : %s ($%.2f)\n", w.Hours, w.Minutes, t.name, amount)
+			} else {
+				fmt.Printf("%4dh %3dm : %s\n", w.Hours, w.Minutes, t.name)
+			}
 		}
 	}
 
@@ -130,6 +172,9 @@ func (r *Report) printProjectTasks() {
 	}
 
 	r.printTotal(p.totalTimeWorked + r.PendingTimeslip.TotalTimeWorked())
+	if totalAmount > 0 {
+		fmt.Printf("Total Amount: $%.2f\n", totalAmount)
+	}
 }
 
 // Displays the total time worked for a report

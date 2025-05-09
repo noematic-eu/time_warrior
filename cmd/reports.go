@@ -58,6 +58,7 @@ func init() {
 
 func generateReport(projectName, period string) {
 	m := manager.NewFromConfig(initializeConfig())
+	config := initializeConfig()
 
 	pendingSlip := timeslip.Slip{}
 	if pending, err := m.PendingTimeSlip(); err == nil {
@@ -80,6 +81,13 @@ func generateReport(projectName, period string) {
 			return
 		}
 		report.ProcessProjectFile(filename)
+	}
+
+	// Set fees for projects
+	for _, p := range report.Projects() {
+		if fee, err := config.GetProjectFee(p.Name()); err == nil {
+			p.SetFeePerHour(fee)
+		}
 	}
 
 	report.PrintReport()
