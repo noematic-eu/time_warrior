@@ -8,6 +8,7 @@ type task struct {
 	started    int
 	finished   int
 	timeWorked int
+	feeRate    float64 // hourly rate in dollars
 }
 
 // Creates a new task from a timeslip JSON string.
@@ -24,12 +25,14 @@ func newTask(jsonData []byte) (*task, error) {
 		name = slip.Task
 	}
 
+	// Default fee rate of 66$ per hour
 	t := &task{
 		name:       name,
 		project:    slip.Project,
 		started:    slip.Started,
 		finished:   slip.Finished,
 		timeWorked: slip.Worked,
+		feeRate:    66.0,
 	}
 
 	return t, nil
@@ -53,4 +56,9 @@ func (t *task) Finished() int {
 // TimeSpent returns the time worked in hours
 func (t *task) TimeSpent() float64 {
 	return float64(t.timeWorked) / 3600.0
+}
+
+// Fee returns the fee for this task in dollars
+func (t *task) Fee() float64 {
+	return t.TimeSpent() * t.feeRate
 }
